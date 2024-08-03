@@ -9,6 +9,13 @@
           pin 12 DataIn 
           pin 11 CLK 
           pin 10 LOAD 
+   Para analisar a saída do sinal no osciloscópio DSO138, basta:
+   - Ligar medidor vermelho no pino 13;
+   - Ligar medidor preto no pino GND;
+   - Setar CPL em DC;
+   - Setar SEN1 em 1V;
+   - Setar SEN2 em X1;
+   - Baixar onda no display até ficar visível.
  *
  */
 #include "LedControl.h"
