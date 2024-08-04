@@ -55,5 +55,5 @@ void loop() {
   digitalWrite(sinalSaida, HIGH);
   delay(1);
   digitalWrite(sinalSaida, LOW);
-  delay(1000/(valorRPM/60)-1);
+  delay((60000/(valorRPM*4))-1);
 }
