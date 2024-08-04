@@ -40,6 +40,7 @@ void setup() {
 }
 
 void loop() {
+  
   valorRPM = map(analogRead(A2),0,1023,750,4300);
   if(timerScreen<millis()){
     timerScreen = millis()+250;
@@ -52,8 +53,10 @@ void loop() {
     lc.setDigit(0,0,0,false);
     Serial.println(valorRPM);
   }
+  
   digitalWrite(sinalSaida, HIGH);
   delay(1);
   digitalWrite(sinalSaida, LOW);
-  delay((60000/(valorRPM*4))-1);
+  delay((60000/(valorRPM*4)));
+  
 }
