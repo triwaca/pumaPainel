@@ -42,7 +42,7 @@ int elasticidade = 5; //define a elasticidade do ponteiro, quanto menor, maior a
 
 bool servoIsOn = false;
 bool espnowIsOn = true;
-bool debugIsOn = false;
+bool debugIsOn = true;
 bool testIsOn = false;
 
 //Servo myservo;
@@ -220,6 +220,7 @@ int rpmValueLimit = 2048;
 bool rpmFlipFlop = false;
 int avgRpmValue = 0;
 int rpmValueCount = 0;
+int rpmValueCountToDisplay = 0;
 int rpmIdealCalc = 0;
 int lowRpm = 0;
 int avgRound = 0;
@@ -358,12 +359,13 @@ void loop() {
     if(debugIsOn){
       display.setTextAlignment(TEXT_ALIGN_LEFT);
       display.setFont(ArialMT_Plain_10);
-      display.drawString(32, 0, "AVG: " + (String)avgRpmValue);
-      display.drawString(32, 13, "Disp: " + (String)dezena(avgRound) + (String)unidade(avgRound));
+      display.drawString(32, 0, (String)rpmFiltered);
+      display.drawString(65, 0, ": " + (String)dezena(rpmFiltered) + (String)unidade(rpmFiltered));
+      display.drawString(32, 13, (String)rpmValueCountToDisplay + " a cada " + (String)refreshTime);
       display.drawString(32, 26, (String)minSignalRead);
       display.drawString(50, 26, (String)rpmValueLimit);
       display.drawString(70, 26, (String)maxSignalRead);
-      display.drawString(32, 38, "Filter: " + (String)rpmFiltered);
+      //display.drawString(32, 38, "Filter: " + (String)rpmFiltered);
       //display.drawString(32, 58, (String)signalRead);
     } else {
       display.drawXbm(60, 0, 36, 24 , allNumbers[dezena(tempRpm)]);
@@ -401,7 +403,7 @@ void loop() {
     tempRpm = (tempRpm + avgFiltered)/2; //calcula a média das leituras
 
     //zera os dados de contador do sinal de RPM
-    
+    rpmValueCountToDisplay = rpmValueCount;
     rpmValueCount = 0;
     //minSignalRead = 1023;
     //maxSignalRead = 0;

@@ -23,7 +23,8 @@
 LedControl lc=LedControl(12,11,10,1);
 
 const int sinalSaida = 13;
-int valorRPM = 1200;
+int valorRPM = 0;
+int freqRPM = 0;
 int mil = 0;
 int cen = 0;
 int dez = 0;
@@ -40,7 +41,9 @@ void setup() {
 }
 
 void loop() {
+  
   valorRPM = map(analogRead(A2),0,1023,750,4300);
+  freqRPM = map(valorRPM,750,4300,25,160);
   if(timerScreen<millis()){
     timerScreen = millis()+250;
     mil = valorRPM/1000;
@@ -52,8 +55,12 @@ void loop() {
     lc.setDigit(0,0,0,false);
     Serial.println(valorRPM);
   }
+  /*
   digitalWrite(sinalSaida, HIGH);
   delay(1);
   digitalWrite(sinalSaida, LOW);
-  delay((60000/(valorRPM*4))-1);
+  delay((60000/(valorRPM*4)));
+  */
+  tone(13,freqRPM);
+  
 }
