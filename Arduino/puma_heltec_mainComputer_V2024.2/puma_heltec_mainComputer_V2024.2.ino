@@ -75,11 +75,11 @@
  */
 #include "Arduino.h"
 //#include "heltec.h"
-#include <ArduinoUniqueID.h> //by Luiz Henrique Cassettari
+#include <ArduinoUniqueID.h>
 #include <esp_now.h>
 #include <WiFi.h>
-#include <TinyGPSPlus.h> //versão ESP32 by Mikail Hart
-#include <SoftWire.h> //by Steve Marple
+#include <TinyGPSPlus.h>
+#include <SoftWire.h>
 #include <AsyncDelay.h>
 #include "SSD1306.h"
 #include <Adafruit_Sensor.h>
@@ -550,6 +550,9 @@ void loop() {
     if(lockGps) digitalWrite(ledPin, led); //quando tem GPS, o led pisca
     if(veloc>limiteVeloc){
       ledVerm = !ledVerm;
+      digitalWrite(pinLedVeloc, ledVerm);
+    } else {
+      ledVerm = false;
       digitalWrite(pinLedVeloc, ledVerm);
     }
     timer = millis() + 250;
