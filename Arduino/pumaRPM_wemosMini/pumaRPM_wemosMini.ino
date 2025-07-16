@@ -42,7 +42,7 @@ int elasticidade = 5; //define a elasticidade do ponteiro, quanto menor, maior a
 
 bool servoIsOn = false;
 bool espnowIsOn = true;
-bool debugIsOn = true;
+bool debugIsOn = false;
 bool testIsOn = false;
 
 //Servo myservo;
@@ -228,10 +228,15 @@ int avgFiltered = 0;
 
 long timmer = 0;
 long timmerTela = 0;
-int refreshTime = 100; //tempo que somará o número de pulsos para cálculo do RPM. Padrão 100ms
+int refreshTime = 250; //tempo que somará o número de pulsos para cálculo do RPM. Padrão 100ms
 int contadorTela = 0; //para diminuir a velocidade de exibição na tela
 int tempRpm = 0; //Calcula a media de X RPMs para exibir apos X tempos do refreshTime
 int displayRpm = 0; //armazena um valor para exibir apos X tempos do refreshTime
+
+//verificação de cilindros
+int tempoCilindros[4] = {0,0,0,0};
+int contadorCilindro = 0;
+long timerCilindros = 0;
 
 // Mensagem de telemetria
 
@@ -359,14 +364,18 @@ void loop() {
     if(debugIsOn){
       display.setTextAlignment(TEXT_ALIGN_LEFT);
       display.setFont(ArialMT_Plain_10);
-      display.drawString(32, 0, (String)rpmFiltered);
-      display.drawString(65, 0, ": " + (String)dezena(rpmFiltered) + (String)unidade(rpmFiltered));
-      display.drawString(32, 13, (String)rpmValueCountToDisplay + " a cada " + (String)refreshTime);
+      display.drawString(32, 0, (String)avgRpmValue);
+      display.drawString(65, 0, ": " + (String)dezena(tempRpm) + (String)unidade(tempRpm));
+      display.drawString(32, 13, (String)rpmValueCountToDisplay + " cada " + (String)refreshTime);
       display.drawString(32, 26, (String)minSignalRead);
       display.drawString(50, 26, (String)rpmValueLimit);
       display.drawString(70, 26, (String)maxSignalRead);
       //display.drawString(32, 38, "Filter: " + (String)rpmFiltered);
       //display.drawString(32, 58, (String)signalRead);
+      display.drawString(32, 38,(String)(tempoCilindros[0]/10) + " " + (String)((tempoCilindros[1]-tempoCilindros[0])/10) + " " + (String)((tempoCilindros[2]-tempoCilindros[1])/10) + " " + (String)((tempoCilindros[3]-tempoCilindros[2])/10));
+      //display.drawString(42, 38,(String)tempoCilindros[1]);
+      //display.drawString(52, 38,(String)tempoCilindros[2]);
+      //display.drawString(62, 38,(String)tempoCilindros[3]);
     } else {
       display.drawXbm(60, 0, 36, 24 , allNumbers[dezena(tempRpm)]);
       display.drawXbm(60, 24, 36, 24 , allNumbers[unidade(tempRpm)]);
@@ -376,6 +385,10 @@ void loop() {
     display.display();
     //displayRpm = tempRpm;
     tempRpm = avgFiltered;
+    tempoCilindros[0] = 0;
+    tempoCilindros[1] = 0;
+    tempoCilindros[2] = 0;
+    tempoCilindros[3] = 0;
   }
   if(timmer<millis()){
     timmer = millis() + refreshTime;
@@ -385,7 +398,7 @@ void loop() {
       if(avgRpmValue<0) avgRpmValue = 0;
       if(avgRpmValue>47000) avgRpmValue = 47000;
     } else {
-      avgRpmValue = rpmValueCount * (60*refreshTime)/4; //calcula quantas vezes o RPM é calculado em um minuto
+      avgRpmValue = (rpmValueCount * (60*(1000/refreshTime))/4)/2; //calcula quantas vezes o RPM é calculado em um minuto
     }
     rpmFiltered = filtroRpm.updateEstimate(avgRpmValue);
 
@@ -393,8 +406,8 @@ void loop() {
     rpmIdealCalc = ideal[marcha];
     
     //dá o RPm com dois dígitos
-    avgRound = avgRpmValue/1000;
-    avgFiltered = rpmFiltered/1000;
+    avgRound = avgRpmValue/100;
+    avgFiltered = rpmFiltered/100;
     if(avgRound>99) avgRound = 99;
     //dá o RPM ideal de acordo com a velocidade
     int idealRound = rpmIdealCalc/100;
@@ -500,6 +513,13 @@ void rpmCalc(){
     if((signalRead<rpmValueLimit)!=rpmFlipFlop){
       rpmValueCount++;
       rpmFlipFlop = !rpmFlipFlop;
+    }
+    //cilindro
+    tempoCilindros[contadorCilindro] = tempoCilindros[contadorCilindro] + (millis() - timerCilindros);
+    contadorCilindro++;
+    if(contadorCilindro>=4) {
+      contadorCilindro = 0;
+      timerCilindros = millis();
     }
   }
 }
