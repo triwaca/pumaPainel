@@ -26,7 +26,7 @@ bool FingerNum;
 uint8_t gesture;
 uint16_t touchX, touchY;
 
-bool modoVeloc = false; //diz se será um velocimetro ou um medidor de parâmetros
+bool modoVeloc = true; //diz se será um velocimetro ou um medidor de parâmetros
 bool debug = false;
 bool simulate = false;
 bool redraw = false;
@@ -90,6 +90,8 @@ int velExibida = 0;
 
 int ultimaDir = 0;
 
+int textoBussola = 0; //indica a direção na tela de 1 a 8
+
 
 void setup() {
   // Init Display
@@ -106,7 +108,7 @@ void setup() {
   digitalWrite(GFX_BL, HIGH);
 #endif
 
-  gfx->setRotation(2);
+  gfx->setRotation(1);
   gfx->fillScreen(BLACK);
   gfx->draw16bitRGBBitmap(0, 81, (const uint16_t *)iconePuma, IMG_WIDTH, IMG_HEIGHT);
   delay(500);
@@ -231,10 +233,11 @@ void loop() {
             if(velValue>3) desenhaBussola(direcValue, false);
             ultimaDir = direcValue;
           }
-          velocimetro(velValue);
+          //velocimetro(velValue);
           exibeHora();
           imprimeLuzes();
           exibeAlertas();
+          mostraDirecao(ultimaDir);
         }
         velocimetroNumeros(velValue);
       } else {
@@ -328,7 +331,7 @@ void loop() {
     if(simTimer<millis()){
       simTimer = millis()+250;
       tempVel = tempVel + (random(10)-3);
-      tempDir = tempDir + (random(3)-1);
+      tempDir = tempDir + (random(6)-2);
       if(tempVel<0)tempVel = 0;
       if(tempVel>53) tempVel = tempVel-random(10);
       decodeJSON("{\"vel\":"+ (String)tempVel + ",\"direc\":" + (String)tempDir + + ",\"limite\":60,\"hora\":12,\"min\":32, \"temp\":28, \"tempMotor\":" + (String)(random(5)+70) + ", \"comb\":"+ (String)(4 + (random(2)-1))+", \"bat\":12.4, \"humi\":57}");
@@ -424,12 +427,72 @@ void velocimetroNumeros(int velocidade){
   velExibida = velocidade;
 }
 
+void mostraDirecao(int heading){
+  gfx->fillRect(0, 0, 256, 36, WHITE);
+  gfx->setFont();
+  gfx->setTextColor(BLACK, WHITE);
+  switch ((heading+22)/45){
+    case 0:
+      gfx->setTextSize(3);
+      gfx->setCursor(74, 12);
+      gfx->print("Norte");
+      break;
+    case 1:
+      gfx->setTextSize(2);
+      gfx->setCursor(72, 18);
+      gfx->print("Nordeste");
+      break;
+    case 2:
+      gfx->setTextSize(3);
+      gfx->setCursor(74, 12);
+      gfx->print("Leste");
+      break;
+    case 3:
+      gfx->setTextSize(2);
+      gfx->setCursor(80, 18);
+      gfx->print("Sudeste");
+      break;
+    case 4:
+      gfx->setTextSize(3);
+      gfx->setCursor(94, 12);
+      gfx->print("Sul"); 
+      break;
+    case 5:
+      gfx->setTextSize(2);
+      gfx->setCursor(73, 18);
+      gfx->print("Sudoeste"); 
+      break;
+    case 6:
+      gfx->setTextSize(3);
+      gfx->setCursor(74, 12);
+      gfx->print("Oeste");
+      break;
+    case 7:
+      gfx->setTextSize(2);
+      gfx->setCursor(72, 18);
+      gfx->print("Noroeste");
+      break;
+    case 8:
+      gfx->setTextSize(3);
+      gfx->setCursor(74, 12);
+      gfx->print("Norte");
+      break;
+    default:
+      gfx->setTextSize(2);
+      gfx->setCursor(74, 12);
+      gfx->print("--------");
+      break;
+  }    
+}
+
 void desenhaBussola(int heading, bool apagar){
-   int minVal = 0;
-   int maxVal = 180;
-   int p = 80;
-   int r=120;
-   heading = 360-heading;
+  int limiteTelaSup = 35;
+  int minVal = 0;
+  int maxVal = 180;
+  int p = 80;
+  int r=120;
+  gfx->setTextSize(2);
+  heading = 360-heading;
   int n1=(r/100.00)*p; // calculate needle percent lenght
   int n2=(r/100.00)*105; // calculate needle percent lenght
   float gs_rad=0; //-90 degrees in radiant
@@ -439,52 +502,59 @@ void desenhaBussola(int heading, bool apagar){
   int yp = cy-(cos(i) * n1);
   int xq = cx+(sin(i) * n2);
   int yq = cy-(cos(i) * n2);
-  //gfx->drawLine(xp,yp,xq,yq, RED); 
-  gfx->setCursor(((xp+xq)/2)-6,(((yp+yq)/2)-6));
-  gfx->setTextSize(2);
-  gfx->setFont();
-  if(apagar){
-    gfx->setTextColor(BLACK);
-  } else {
-    gfx->setTextColor(RED);
+  //gfx->drawLine(xp,yp,xq,yq, RED);
+  if(yq>limiteTelaSup){
+    gfx->setCursor(((xp+xq)/2)-6,(((yp+yq)/2)-6));
+    gfx->setFont();
+    if(apagar){
+      gfx->setTextColor(BLACK);
+    } else {
+      gfx->setTextColor(RED);
+    }
+    gfx->println("N");
   }
-  gfx->println("N");
   i=((heading+90-minVal)*(ge_rad-gs_rad)/(maxVal-minVal)+gs_rad);
   xp = cx+(sin(i) * n1);
   yp = cy-(cos(i) * n1);
   xq = cx+(sin(i) * n2);
   yq = cy-(cos(i) * n2);
-  gfx->setCursor(((xp+xq)/2)-6,(((yp+yq)/2)-6));
-  if(apagar){
-    gfx->setTextColor(BLACK);
-  } else {
-    gfx->setTextColor(WHITE);
+  if(yq>40){
+    gfx->setCursor(((xp+xq)/2)-6,(((yp+yq)/2)-6));
+    if(apagar){
+      gfx->setTextColor(BLACK);
+    } else {
+      gfx->setTextColor(WHITE);
+    }
+    gfx->println("L");
   }
-  gfx->println("L");
   i=((heading+180-minVal)*(ge_rad-gs_rad)/(maxVal-minVal)+gs_rad);
   xp = cx+(sin(i) * n1);
   yp = cy-(cos(i) * n1);
   xq = cx+(sin(i) * n2);
   yq = cy-(cos(i) * n2);
-  gfx->setCursor(((xp+xq)/2)-6,(((yp+yq)/2)-6));
-  if(apagar){
-    gfx->setTextColor(BLACK);
-  } else {
-    gfx->setTextColor(WHITE);
+  if(yq>limiteTelaSup){
+    gfx->setCursor(((xp+xq)/2)-6,(((yp+yq)/2)-6));
+    if(apagar){
+      gfx->setTextColor(BLACK);
+    } else {
+      gfx->setTextColor(WHITE);
+    }
+    gfx->println("S");
   }
-  gfx->println("S");
   i=((heading+270-minVal)*(ge_rad-gs_rad)/(maxVal-minVal)+gs_rad);
   xp = cx+(sin(i) * n1);
   yp = cy-(cos(i) * n1);
   xq = cx+(sin(i) * n2);
   yq = cy-(cos(i) * n2);
-  gfx->setCursor(((xp+xq)/2)-6,(((yp+yq)/2)-6));
-  if(apagar){
-    gfx->setTextColor(BLACK);
-  } else {
-    gfx->setTextColor(WHITE);
+  if(yq>40){
+    gfx->setCursor(((xp+xq)/2)-6,(((yp+yq)/2)-6));
+    if(apagar){
+      gfx->setTextColor(BLACK);
+    } else {
+      gfx->setTextColor(WHITE);
+    }
+    gfx->println("O");
   }
-  gfx->println("O");
   //linhas
   n1=(r/100.00)*90; // calculate needle percent lenght
   n2=(r/100.00)*105; // calculate needle percent lenght
@@ -494,13 +564,15 @@ void desenhaBussola(int heading, bool apagar){
     yp = cy-(cos(i) * n1);
     xq = cx+(sin(i) * n2);
     yq = cy-(cos(i) * n2);
-    if(apagar){
-      gfx->drawLine(xp,yp,xq,yq, BLACK);
-    } else {
-      if(j-heading==45){
-        gfx->drawLine(xp,yp,xq,yq, WHITE);
+    if(yq>limiteTelaSup){
+      if(apagar){
+        gfx->drawLine(xp,yp,xq,yq, BLACK);
       } else {
-        gfx->drawLine(xp,yp,xq,yq, gfx->color565(128, 128, 128));
+        if(j-heading==45){
+          gfx->drawLine(xp,yp,xq,yq, WHITE);
+        } else {
+          gfx->drawLine(xp,yp,xq,yq, gfx->color565(128, 128, 128));
+        }
       }
     }
   }
@@ -510,13 +582,15 @@ void desenhaBussola(int heading, bool apagar){
     yp = cy-(cos(i) * n1);
     xq = cx+(sin(i) * n2);
     yq = cy-(cos(i) * n2);
-    if(apagar){
-      gfx->drawLine(xp,yp,xq,yq, BLACK);
-    } else {
-      if(j-heading==135){
-        gfx->drawLine(xp,yp,xq,yq, WHITE);
+    if(yq>limiteTelaSup){
+      if(apagar){
+        gfx->drawLine(xp,yp,xq,yq, BLACK);
       } else {
-        gfx->drawLine(xp,yp,xq,yq, gfx->color565(128, 128, 128));
+        if(j-heading==135){
+          gfx->drawLine(xp,yp,xq,yq, WHITE);
+        } else {
+          gfx->drawLine(xp,yp,xq,yq, gfx->color565(128, 128, 128));
+        }
       }
     }
   }
@@ -526,13 +600,15 @@ void desenhaBussola(int heading, bool apagar){
     yp = cy-(cos(i) * n1);
     xq = cx+(sin(i) * n2);
     yq = cy-(cos(i) * n2);
-    if(apagar){
-      gfx->drawLine(xp,yp,xq,yq, BLACK);
-    } else {
-      if(j-heading==225){
-        gfx->drawLine(xp,yp,xq,yq, WHITE);
+    if(yq>limiteTelaSup){
+      if(apagar){
+        gfx->drawLine(xp,yp,xq,yq, BLACK);
       } else {
-        gfx->drawLine(xp,yp,xq,yq, gfx->color565(128, 128, 128));
+        if(j-heading==225){
+          gfx->drawLine(xp,yp,xq,yq, WHITE);
+        } else {
+          gfx->drawLine(xp,yp,xq,yq, gfx->color565(128, 128, 128));
+        }
       }
     }
   }
@@ -542,13 +618,15 @@ void desenhaBussola(int heading, bool apagar){
     yp = cy-(cos(i) * n1);
     xq = cx+(sin(i) * n2);
     yq = cy-(cos(i) * n2);
-    if(apagar){
-      gfx->drawLine(xp,yp,xq,yq, BLACK);
-    } else {
-      if(j-heading==315){
-        gfx->drawLine(xp,yp,xq,yq, WHITE);
+    if(yq>limiteTelaSup){
+      if(apagar){
+        gfx->drawLine(xp,yp,xq,yq, BLACK);
       } else {
-        gfx->drawLine(xp,yp,xq,yq, gfx->color565(128, 128, 128));
+        if(j-heading==315){
+          gfx->drawLine(xp,yp,xq,yq, WHITE);
+        } else {
+          gfx->drawLine(xp,yp,xq,yq, gfx->color565(128, 128, 128));
+        }
       }
     }
   }
@@ -662,7 +740,7 @@ void exibeHora(){
     horaParaExibir = (String)horaAtual + ":";
     if(minutoAtual<10) horaParaExibir = horaParaExibir + "0";
     horaParaExibir = horaParaExibir + (String)minutoAtual;
-    gfx->fillRect(70, 36, 10, 28, BLACK);
+    gfx->fillRect(70, 42, 10, 28, BLACK);
     gfx->setFont(&Org_01);
     gfx->setTextSize(4);
     gfx->setTextColor(WHITE, BLACK);
@@ -693,7 +771,7 @@ void exibeHora(){
     } else {
       posicHora = posicHora - 18;
     }
-    gfx->setCursor((posicHora/2)-12, 52);
+    gfx->setCursor((posicHora/2)-12, 60);
     gfx->print(horaParaExibir);
   }
 }
